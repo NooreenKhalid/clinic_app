@@ -1,0 +1,60 @@
+name: flutter_application_1
+description: "Flutter Clinic System - Firebase + ImageBB + Multi Image + Zoom + PDF + Download"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # 🔥 Firebase
+  firebase_core: ^4.4.0
+  firebase_auth: ^6.1.4
+  cloud_firestore: ^6.1.2
+
+  # 📸 Image Picker (multi image)
+  image_picker: ^1.0.7
+
+  # 🔍 Zoom support
+  photo_view: ^0.15.0
+
+  # 🌐 HTTP
+  http: ^1.2.2
+
+  # 🖼️ Save image to gallery
+  image_gallery_saver: ^2.0.3
+
+  # 🧾 PDF
+  pdf: ^3.10.6
+  printing: ^5.13.4
+
+  # 🔐 Permissions
+  permission_handler: ^11.0.1
+
+  # 📂 File path
+  path_provider: ^2.1.2
+  path: ^1.8.3
+
+  # 🎨 UI
+  cupertino_icons: ^1.0.8
+  google_fonts: ^5.0.0
+
+  # 🗄️ Local DB
+  sqflite: ^2.3.2
+
+  # 🔗 External links
+  url_launcher: ^6.1.10
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
