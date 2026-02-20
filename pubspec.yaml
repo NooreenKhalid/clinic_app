@@ -33,7 +33,7 @@ dependencies:
   printing: ^5.13.4
 
   # 🔐 Permissions
-  permission_handler: ^11.0.1
+  permission_handler: ^12.0.1
 
   # 📂 File path
   path_provider: ^2.1.2
@@ -41,7 +41,7 @@ dependencies:
 
   # 🎨 UI
   cupertino_icons: ^1.0.8
-  google_fonts: ^5.0.0
+  google_fonts: ^8.0.2
 
   # 🗄️ Local DB
   sqflite: ^2.3.2
