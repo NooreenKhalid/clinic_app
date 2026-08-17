@@ -104,13 +104,13 @@ class _LoginPageState extends State<LoginPage>
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor =
-        widget.isDarkMode ? Colors.grey[900] : const Color(0xFFF4F6FA);
-    final containerColor = widget.isDarkMode ? Colors.grey[850] : Colors.white;
-    final textColor = widget.isDarkMode ? Colors.white : Colors.black87;
-    final labelColor = widget.isDarkMode ? Colors.white70 : Colors.grey;
-    final inputFillColor =
-        widget.isDarkMode ? Colors.grey[800] : const Color(0xFFF9FAFB);
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final backgroundColor = theme.scaffoldBackgroundColor;
+    final containerColor = colors.surface;
+    final textColor = colors.onSurface;
+    final labelColor = colors.onSurfaceVariant;
+    final inputFillColor = theme.inputDecorationTheme.fillColor;
 
     final size = MediaQuery.of(context).size;
 
@@ -143,20 +143,18 @@ class _LoginPageState extends State<LoginPage>
                     height: 100,
                     width: 100,
                     decoration: BoxDecoration(
-                      image: const DecorationImage(
-                        image:
-                            AssetImage('assets/images/smart_clinic_logo.png'),
-                        fit: BoxFit.cover,
-                      ),
+                      color: colors.primary.withOpacity(.14),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.teal.withOpacity(0.4),
+                          color: colors.primary.withOpacity(0.25),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
                       ],
                     ),
+                    child: Icon(Icons.local_hospital_outlined,
+                        color: colors.primary, size: 48),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -167,7 +165,7 @@ class _LoginPageState extends State<LoginPage>
                   style: GoogleFonts.poppins(
                     fontSize: 30,
                     fontWeight: FontWeight.bold,
-                    color: Colors.teal[700],
+                    color: colors.primary,
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -223,7 +221,7 @@ class _LoginPageState extends State<LoginPage>
                         _hidePassword
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
-                        color: Colors.teal[700],
+                        color: colors.primary,
                       ),
                       onPressed: () =>
                           setState(() => _hidePassword = !_hidePassword),
@@ -239,11 +237,11 @@ class _LoginPageState extends State<LoginPage>
                   child: ElevatedButton(
                     onPressed: _loading ? null : _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal[700],
+                      backgroundColor: colors.primary,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20)),
                       elevation: 8,
-                      shadowColor: Colors.tealAccent.withOpacity(0.4),
+                      shadowColor: colors.primary.withOpacity(0.25),
                     ),
                     child: _loading
                         ? const SizedBox(
@@ -299,7 +297,7 @@ class _LoginPageState extends State<LoginPage>
                 IconButton(
                   icon: Icon(
                       widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-                      color: Colors.teal[700],
+                      color: colors.primary,
                       size: 28),
                   onPressed: widget.onThemeToggle,
                   tooltip: widget.isDarkMode
@@ -319,10 +317,10 @@ class _LoginPageState extends State<LoginPage>
     return InputDecoration(
       labelText: label,
       labelStyle: GoogleFonts.poppins(
-        color: Colors.teal[700]?.withOpacity(0.7),
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
         fontWeight: FontWeight.w500,
       ),
-      prefixIcon: Icon(icon, color: Colors.teal[700]),
+      prefixIcon: Icon(icon, color: Theme.of(context).colorScheme.primary),
       suffixIcon: suffix,
       filled: true,
       fillColor: fillColor,
@@ -333,7 +331,10 @@ class _LoginPageState extends State<LoginPage>
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(20),
-        borderSide: BorderSide(color: Colors.teal.shade700, width: 2),
+        borderSide: BorderSide(
+          color: Theme.of(context).colorScheme.primary,
+          width: 2,
+        ),
       ),
     );
   }

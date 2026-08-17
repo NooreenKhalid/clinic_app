@@ -1,6 +1,6 @@
-name: flutter_application_1
-description: "Flutter Clinic System - Firebase + ImageBB + Multi Image + Zoom + PDF + Download"
-publish_to: 'none'
+name: smart_clinic_app
+description: "Secure patient record management for Smart Clinic App"
+publish_to: "none"
 
 version: 1.0.0+1
 
@@ -11,50 +11,69 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # 🔥 Firebase
+  # Firebase
   firebase_core: ^4.4.0
   firebase_auth: ^6.1.4
   cloud_firestore: ^6.1.2
 
-  # 📸 Image Picker (multi image)
+  # Image Picker
   image_picker: ^1.0.7
 
-  # 🔍 Zoom support
+  # Image viewer / zoom
   photo_view: ^0.15.0
 
-  # 🌐 HTTP
+  # HTTP / ImageBB
   http: ^1.2.2
 
-  # 🖼️ Save image to gallery
+  # Save image to gallery
   image_gallery_saver: ^2.0.3
 
-  # 🧾 PDF
+  # PDF
   pdf: ^3.10.6
   printing: ^5.13.4
 
-  # 🔐 Permissions
+  # Permissions
   permission_handler: ^12.0.1
 
-  # 📂 File path
+  # File handling
   path_provider: ^2.1.2
   path: ^1.8.3
 
-  # 🎨 UI
+  # UI
   cupertino_icons: ^1.0.8
   google_fonts: ^8.0.2
 
-  # 🗄️ Local DB
+  # Local database
   sqflite: ^2.3.2
 
-  # 🔗 External links
+  # External links
   url_launcher: ^6.1.10
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
   flutter_lints: ^6.0.0
+
+  # App launcher icon generator
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
+
+  # App images/assets
   assets:
     - assets/images/
+
+# Smart Clinic App launcher icon
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/smart_clinic_logo.png"
+
+  # Android adaptive icon
+  adaptive_icon_background: "#0A1A2F"
+  adaptive_icon_foreground: "assets/images/smart_clinic_logo.png"
+
+  # iOS
+  remove_alpha_ios: true

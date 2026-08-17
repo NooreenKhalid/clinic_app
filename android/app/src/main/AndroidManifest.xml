@@ -23,7 +23,7 @@
 
     <application
         android:name="${applicationName}"
-        android:label="flutter_application_1"
+        android:label="Smart Clinic App"
         android:icon="@mipmap/ic_launcher"
         android:requestLegacyExternalStorage="true">
 

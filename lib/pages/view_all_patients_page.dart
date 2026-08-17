@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/imagebb_service.dart';
+import '../core/app_ui.dart';
+import '../screens/patient_photo_page.dart';
 
 class ViewAllPatientsPage extends StatefulWidget {
   const ViewAllPatientsPage({super.key});
@@ -20,7 +22,6 @@ class _ViewAllPatientsPageState extends State<ViewAllPatientsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("All Patients"),
-        backgroundColor: Colors.teal,
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: _firestore
@@ -33,41 +34,64 @@ class _ViewAllPatientsPageState extends State<ViewAllPatientsPage> {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text("No patient records found"));
+            return Center(
+              child: AppSurface(
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.people_outline,
+                      color: Theme.of(context).colorScheme.primary, size: 38),
+                  const SizedBox(height: 12),
+                  const Text("No patient records found"),
+                  const SizedBox(height: 4),
+                  Text("New records will appear here.",
+                      style: TextStyle(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant)),
+                ]),
+              ),
+            );
           }
 
           final patients = snapshot.data!.docs;
 
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: patients.length,
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+            itemCount: patients.length + 1,
             itemBuilder: (context, index) {
+              if (index == 0) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Text('${patients.length} patient records',
+                      style: TextStyle(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant)),
+                );
+              }
+              index -= 1;
               final data = patients[index].data();
-              final patientId = data['patientId'] ?? patients[index].id;
+              // The Firestore document ID is the only safe ID for document
+              // reads/updates. `patientId` remains display data only.
+              final documentId = patients[index].id;
+              final patientId = data['patientId'] ?? documentId;
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 14),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant),
                 ),
                 child: ListTile(
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   leading: CircleAvatar(
                     radius: 26,
-                    backgroundColor: Colors.teal,
+                    backgroundColor:
+                        Theme.of(context).colorScheme.primary.withOpacity(.16),
                     child: Text(
                       (data['name'] ?? 'P')[0].toUpperCase(),
-                      style: const TextStyle(
-                          color: Colors.white,
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
                           fontSize: 20,
                           fontWeight: FontWeight.bold),
                     ),
@@ -81,14 +105,19 @@ class _ViewAllPatientsPageState extends State<ViewAllPatientsPage> {
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       "ID: $patientId\nAge: ${data['age'] ?? '-'}\nPhone: ${data['phone'] ?? 'NA'}",
-                      style:
-                          const TextStyle(fontSize: 13, color: Colors.black54),
+                      style: TextStyle(
+                          fontSize: 13,
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ),
                   trailing: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(.12),
+                      foregroundColor: Theme.of(context).colorScheme.primary,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 10),
                       shape: RoundedRectangleBorder(
@@ -99,7 +128,7 @@ class _ViewAllPatientsPageState extends State<ViewAllPatientsPage> {
                         context,
                         MaterialPageRoute(
                           builder: (_) =>
-                              PatientDetailsPage(patientId: patientId),
+                              PatientDetailsPage(patientId: documentId),
                         ),
                       );
                     },
@@ -127,9 +156,24 @@ class PatientDetailsPage extends StatefulWidget {
 class _PatientDetailsPageState extends State<PatientDetailsPage> {
   final _firestore = FirebaseFirestore.instance;
   final _picker = ImagePicker();
+  late Future<DocumentSnapshot<Map<String, dynamic>>> _patientFuture;
   List<XFile> newImages = [];
   List<Uint8List> newImageBytes = [];
   bool uploading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _patientFuture =
+        _firestore.collection('patients').doc(widget.patientId).get();
+  }
+
+  void _refreshPatient() {
+    setState(() {
+      _patientFuture =
+          _firestore.collection('patients').doc(widget.patientId).get();
+    });
+  }
 
   // Pick images from gallery or camera
   Future<void> pickImage(ImageSource source) async {
@@ -152,8 +196,8 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
         }
       }
       setState(() {});
-    } catch (e) {
-      debugPrint("Error picking images: $e");
+    } catch (_) {
+      debugPrint("Patient image selection failed.");
     }
   }
 
@@ -219,10 +263,9 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Patient Details"),
-        backgroundColor: Colors.teal,
       ),
       body: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-        future: _firestore.collection('patients').doc(widget.patientId).get(),
+        future: _patientFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting)
             return const Center(child: CircularProgressIndicator());
@@ -233,28 +276,54 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
             return const Center(child: Text("Patient data not found"));
 
           final data = snapshot.data!.data()!;
+          final imageUrl = (data['imageUrl'] as String? ?? '').trim();
           final images = List<String>.from(data['image_urls'] ?? []);
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _infoTile("Name", data['name']),
-                _infoTile("Age", data['age']),
-                _infoTile("Gender", data['gender']),
-                _infoTile("Disease", data['disease']),
-                _infoTile("History", data['history']),
-                _infoTile("Surgery", data['surgery']),
-                _infoTile("Email", data['email']),
-                _infoTile("Phone", data['phone']),
+                AppSurface(
+                    child: Column(children: [
+                  _infoTile("Name", data['name']),
+                  _infoTile("Age", data['age']),
+                  _infoTile("Gender", data['gender']),
+                  _infoTile("Disease", data['disease']),
+                  _infoTile("History", data['history']),
+                  _infoTile("Surgery", data['surgery']),
+                  _infoTile("Email", data['email']),
+                  _infoTile("Phone", data['phone']),
+                ])),
                 const SizedBox(height: 16),
                 const Text("Patient Photos",
                     style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 10),
-                // Existing images from Firestore
-                _imageGallery(images),
+                _buildPatientPhoto(imageUrl),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final changed = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            PatientPhotoPage(patientId: widget.patientId),
+                      ),
+                    );
+                    if (changed == true && mounted) _refreshPatient();
+                  },
+                  icon: const Icon(Icons.add_a_photo_outlined),
+                  label: const Text('Manage patient photo'),
+                ),
+                // Preserve the existing multi-image gallery functionality.
+                if (images.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  const Text('Additional images',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 10),
+                  _imageGallery(images),
+                ],
                 // Newly picked images before upload
                 if (newImages.isNotEmpty)
                   _imageGallery(newImages
@@ -278,11 +347,14 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
                   child: ElevatedButton(
                     onPressed: uploading ? null : uploadImages,
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.teal,
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor:
+                            Theme.of(context).colorScheme.onPrimary,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12))),
                     child: uploading
-                        ? const CircularProgressIndicator(color: Colors.white)
+                        ? CircularProgressIndicator(
+                            color: Theme.of(context).colorScheme.onPrimary)
                         : const Text("Upload Images",
                             style: TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 16)),
@@ -299,8 +371,97 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
   Widget _infoTile(String label, dynamic value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child:
-          Text("$label: ${value ?? '-'}", style: const TextStyle(fontSize: 16)),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        SizedBox(
+            width: 88,
+            child: Text(label,
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 14))),
+        Expanded(
+            child:
+                Text('${value ?? '-'}', style: const TextStyle(fontSize: 15))),
+      ]),
+    );
+  }
+
+  Widget _buildPatientPhoto(String imageUrl) {
+    if (imageUrl.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border:
+              Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.account_circle_outlined,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                size: 42),
+            const SizedBox(height: 10),
+            const Text('No patient photo',
+                style: TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Text('Add a photo to help identify this patient.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 13)),
+          ],
+        ),
+      );
+    }
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 360),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: Text('Patient Photo',
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 13)),
+        ),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Container(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  alignment: Alignment.center,
+                  child: const SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: CircularProgressIndicator(strokeWidth: 2)),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) => Container(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                alignment: Alignment.center,
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.broken_image_outlined,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      size: 38),
+                  const SizedBox(height: 8),
+                  Text('Unable to load patient photo',
+                      style: TextStyle(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant)),
+                ]),
+              ),
+            ),
+          ),
+        ),
+      ]),
     );
   }
 
@@ -371,12 +532,12 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
   Widget _actionButton(IconData icon, String text, VoidCallback onTap) {
     return Expanded(
       child: ElevatedButton.icon(
-        icon: Icon(icon, color: Colors.white),
-        label: Text(text,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold)),
+        icon: Icon(icon),
+        label: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.teal,
+          backgroundColor:
+              Theme.of(context).colorScheme.primary.withOpacity(.12),
+          foregroundColor: Theme.of(context).colorScheme.primary,
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

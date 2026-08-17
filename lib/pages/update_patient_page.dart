@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/imagebb_service.dart';
+import '../core/app_ui.dart';
 
 class UpdatePatientPage extends StatefulWidget {
   const UpdatePatientPage({super.key});
@@ -200,7 +201,7 @@ class _UpdatePatientPageState extends State<UpdatePatientPage> {
           hintText: "Enter $label",
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
-          fillColor: Colors.grey[100],
+          fillColor: Theme.of(context).inputDecorationTheme.fillColor,
         ),
       ),
     );
@@ -234,12 +235,14 @@ class _UpdatePatientPageState extends State<UpdatePatientPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-          title: const Text("Update Patient"), backgroundColor: Colors.orange),
+      appBar: AppBar(title: const Text("Update Patient")),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
         child: Column(
           children: [
+            const PageIntro(
+                title: 'Update patient',
+                subtitle: 'Find a record, then update its available fields.'),
             _field(searchController, "Patient ID or Name"),
             _field(phoneController, "Phone Number (if Name used)"),
             SizedBox(
@@ -248,7 +251,9 @@ class _UpdatePatientPageState extends State<UpdatePatientPage> {
               child: ElevatedButton(
                 onPressed: loading ? null : searchPatient,
                 child: loading
-                    ? const CircularProgressIndicator(color: Colors.white)
+                    ? CircularProgressIndicator(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      )
                     : const Text("Search Patients"),
               ),
             ),
@@ -295,7 +300,9 @@ class _UpdatePatientPageState extends State<UpdatePatientPage> {
                 child: ElevatedButton(
                   onPressed: loading ? null : updatePatient,
                   child: loading
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? CircularProgressIndicator(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        )
                       : const Text("Update Patient"),
                 ),
               ),

@@ -91,13 +91,60 @@ class _RoleBasedRedirect extends StatelessWidget {
               onThemeToggle: onThemeToggle,
             );
           case 'staff':
-            return StaffDashboardPro(
+            return _StaffAccessRedirect(
+              uid: uid,
+              userStatus: data['status'] as String?,
               isDarkMode: isDarkMode,
               onThemeToggle: onThemeToggle,
             );
           default:
             return const _ErrorScreen(message: "Invalid user role");
         }
+      },
+    );
+  }
+}
+
+/// A persisted authentication session must also satisfy the staff approval
+/// record; this prevents a disabled staff account from reaching the dashboard
+/// after an app restart.
+class _StaffAccessRedirect extends StatelessWidget {
+  final String uid;
+  final String? userStatus;
+  final bool isDarkMode;
+  final VoidCallback onThemeToggle;
+
+  const _StaffAccessRedirect({
+    required this.uid,
+    required this.userStatus,
+    required this.isDarkMode,
+    required this.onThemeToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      future: FirebaseFirestore.instance.collection('staff').doc(uid).get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const _LoadingScreen();
+        }
+        // Staff hired through the callable Function always have both active
+        // records. A missing staff document is allowed only for a legacy
+        // account that predates staff management and has not been disabled.
+        if (userStatus == 'inactive' ||
+            (snapshot.data?.exists == true &&
+                snapshot.data?.data()?['status'] != 'active')) {
+          FirebaseAuth.instance.signOut();
+          return const _ErrorScreen(
+            message:
+                'This staff account has been deactivated by the administrator.',
+          );
+        }
+        return StaffDashboardPro(
+          isDarkMode: isDarkMode,
+          onThemeToggle: onThemeToggle,
+        );
       },
     );
   }
@@ -127,7 +174,10 @@ class _ErrorScreen extends StatelessWidget {
       body: Center(
         child: Text(
           message,
-          style: const TextStyle(fontSize: 16, color: Colors.red),
+          style: TextStyle(
+            fontSize: 16,
+            color: Theme.of(context).colorScheme.error,
+          ),
           textAlign: TextAlign.center,
         ),
       ),

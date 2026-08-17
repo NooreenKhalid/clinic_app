@@ -25,7 +25,7 @@ class SmartClinicApp extends StatefulWidget {
 }
 
 class _SmartClinicAppState extends State<SmartClinicApp> {
-  bool isDarkMode = false;
+  bool isDarkMode = true;
 
   void toggleTheme() {
     setState(() => isDarkMode = !isDarkMode);
@@ -34,7 +34,7 @@ class _SmartClinicAppState extends State<SmartClinicApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Smart Clinic',
+      title: 'Smart Clinic App',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

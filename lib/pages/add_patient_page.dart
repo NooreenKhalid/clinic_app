@@ -1,11 +1,14 @@
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../services/imagebb_service.dart';
 import 'view_all_patients_page.dart';
+import '../core/app_ui.dart';
 
 class AddPatientPage extends StatefulWidget {
   const AddPatientPage({super.key});
@@ -40,17 +43,25 @@ class _AddPatientPageState extends State<AddPatientPage> {
         .orderBy('createdAt', descending: true)
         .limit(1)
         .get();
+
     if (snap.docs.isEmpty) return 'P001';
+
     final last = snap.docs.first.data()['patientId'] ?? 'P000';
     final num = int.tryParse(last.substring(1)) ?? 0;
+
     return 'P${(num + 1).toString().padLeft(3, '0')}';
   }
 
   // --- Pick Image ---
   Future<void> _pick(ImageSource source) async {
-    final picked = await _picker.pickImage(source: source, imageQuality: 80);
+    final picked = await _picker.pickImage(
+      source: source,
+      imageQuality: 80,
+    );
+
     if (picked != null) {
       final bytes = await picked.readAsBytes();
+
       setState(() {
         _image = picked;
         _imageBytes = bytes;
@@ -66,6 +77,7 @@ class _AddPatientPageState extends State<AddPatientPage> {
         name: nameC.text.isNotEmpty ? nameC.text : null,
       );
     }
+
     return null;
   }
 
@@ -112,6 +124,7 @@ class _AddPatientPageState extends State<AddPatientPage> {
       historyC.clear();
       emailC.clear();
       phoneC.clear();
+
       setState(() {
         _image = null;
         _imageBytes = null;
@@ -125,7 +138,8 @@ class _AddPatientPageState extends State<AddPatientPage> {
         ),
       );
     } catch (e) {
-      _showMsg(e.toString(), false);
+      debugPrint('Add patient failed: $e');
+      _showMsg("Something went wrong. Please try again.", false);
     } finally {
       setState(() => adding = false);
     }
@@ -135,41 +149,103 @@ class _AddPatientPageState extends State<AddPatientPage> {
   void _showMsg(String msg, bool ok) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg,
-            style: GoogleFonts.poppins(
-                color: Colors.white, fontWeight: FontWeight.w600)),
+        content: Text(
+          msg,
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         backgroundColor: ok ? Colors.green : Colors.redAccent,
         behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 12,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
 
-  InputDecoration _dec(String label) => InputDecoration(
-        labelText: label,
-        hintText: "Enter $label",
-        hintStyle: GoogleFonts.poppins(color: Colors.grey),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        filled: true,
-        fillColor: Colors.grey[100],
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-      );
+  // --- Theme-aware input decoration ---
+  InputDecoration _dec(String label) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return InputDecoration(
+      labelText: label,
+      hintText: "Enter $label",
+      labelStyle: TextStyle(
+        color: colors.onSurfaceVariant,
+      ),
+      hintStyle: GoogleFonts.poppins(
+        color: colors.onSurfaceVariant,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: colors.outline,
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: colors.outline,
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: colors.primary,
+          width: 1.4,
+        ),
+      ),
+      filled: true,
+      fillColor: theme.inputDecorationTheme.fillColor,
+      contentPadding: const EdgeInsets.symmetric(
+        vertical: 16,
+        horizontal: 20,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text("Add Patient",
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-        backgroundColor: Colors.teal,
+        title: Text(
+          "Add Patient",
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(
+          20,
+          8,
+          20,
+          28,
+        ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(controller: nameC, decoration: _dec("Patient Name")),
+            const PageIntro(
+              title: 'New patient',
+              subtitle: 'Create a complete and secure patient record.',
+            ),
+            TextField(
+              controller: nameC,
+              style: TextStyle(
+                color: colors.onSurface,
+              ),
+              decoration: _dec("Patient Name"),
+            ),
             const SizedBox(height: 14),
             Row(
               children: [
@@ -178,6 +254,9 @@ class _AddPatientPageState extends State<AddPatientPage> {
                   child: TextField(
                     controller: ageC,
                     keyboardType: TextInputType.number,
+                    style: TextStyle(
+                      color: colors.onSurface,
+                    ),
                     decoration: _dec("Age"),
                   ),
                 ),
@@ -186,6 +265,9 @@ class _AddPatientPageState extends State<AddPatientPage> {
                   flex: 3,
                   child: TextField(
                     controller: addressC,
+                    style: TextStyle(
+                      color: colors.onSurface,
+                    ),
                     decoration: _dec("Address"),
                   ),
                 ),
@@ -194,9 +276,23 @@ class _AddPatientPageState extends State<AddPatientPage> {
             const SizedBox(height: 14),
             DropdownButtonFormField<String>(
               value: selectedGender,
+              style: TextStyle(
+                color: colors.onSurface,
+                fontSize: 16,
+              ),
               decoration: _dec("Gender"),
               items: ["Male", "Female", "Other"]
-                  .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                  .map(
+                    (g) => DropdownMenuItem(
+                      value: g,
+                      child: Text(
+                        g,
+                        style: TextStyle(
+                          color: colors.onSurface,
+                        ),
+                      ),
+                    ),
+                  )
                   .toList(),
               onChanged: (val) => setState(() => selectedGender = val!),
             ),
@@ -204,29 +300,53 @@ class _AddPatientPageState extends State<AddPatientPage> {
             TextField(
               controller: diseaseC,
               maxLines: 3,
+              style: TextStyle(
+                color: colors.onSurface,
+              ),
               decoration: _dec("Disease / Condition"),
             ),
             const SizedBox(height: 14),
             TextField(
               controller: historyC,
               maxLines: 3,
+              style: TextStyle(
+                color: colors.onSurface,
+              ),
               decoration: _dec("Patient History"),
             ),
             const SizedBox(height: 14),
             TextField(
               controller: surgeryC,
               maxLines: 2,
+              style: TextStyle(
+                color: colors.onSurface,
+              ),
               decoration: _dec("Surgery / Procedure"),
             ),
             const SizedBox(height: 14),
-            TextField(controller: emailC, decoration: _dec("Email")),
+            TextField(
+              controller: emailC,
+              style: TextStyle(
+                color: colors.onSurface,
+              ),
+              decoration: _dec("Email"),
+            ),
             const SizedBox(height: 14),
-            TextField(controller: phoneC, decoration: _dec("Phone")),
+            TextField(
+              controller: phoneC,
+              style: TextStyle(
+                color: colors.onSurface,
+              ),
+              decoration: _dec("Phone"),
+            ),
             const SizedBox(height: 16),
             _imageBytes != null
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.memory(_imageBytes!, height: 140),
+                    child: Image.memory(
+                      _imageBytes!,
+                      height: 140,
+                    ),
                   )
                 : const Text("No image selected"),
             const SizedBox(height: 12),
@@ -234,14 +354,20 @@ class _AddPatientPageState extends State<AddPatientPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton.icon(
-                    onPressed: () => _pick(ImageSource.gallery),
-                    icon: const Icon(Icons.photo),
-                    label: const Text("Gallery")),
+                  onPressed: () => _pick(
+                    ImageSource.gallery,
+                  ),
+                  icon: const Icon(Icons.photo),
+                  label: const Text("Gallery"),
+                ),
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
-                    onPressed: () => _pick(ImageSource.camera),
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text("Camera")),
+                  onPressed: () => _pick(
+                    ImageSource.camera,
+                  ),
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text("Camera"),
+                ),
               ],
             ),
             const SizedBox(height: 20),
@@ -251,14 +377,23 @@ class _AddPatientPageState extends State<AddPatientPage> {
               child: ElevatedButton(
                 onPressed: adding ? null : addPatient,
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16))),
+                  backgroundColor: colors.primary,
+                  foregroundColor: colors.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
                 child: adding
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : Text("Add Patient",
+                    ? CircularProgressIndicator(
+                        color: colors.onPrimary,
+                      )
+                    : Text(
+                        "Add Patient",
                         style: GoogleFonts.poppins(
-                            fontSize: 18, fontWeight: FontWeight.w600)),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
               ),
             ),
           ],

@@ -1,0 +1,6 @@
+# Copy this file to android/key.properties and replace every value locally.
+# Never commit android/key.properties or the referenced keystore.
+storePassword=REPLACE_LOCALLY
+keyPassword=REPLACE_LOCALLY
+keyAlias=REPLACE_LOCALLY
+storeFile=../app/REPLACE_WITH_KEYSTORE_FILENAME.jks

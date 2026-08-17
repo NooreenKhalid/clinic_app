@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../core/app_ui.dart';
 
 class SearchPatientPage extends StatefulWidget {
   final bool? isDarkMode;
@@ -76,10 +77,10 @@ class _SearchPatientPageState extends State<SearchPatientPage> {
   Widget _patientCard(Map<String, dynamic> data) {
     final List<String> images = List<String>.from(data['image_urls'] ?? []);
     final imageUrl = images.isNotEmpty ? images.first : '';
-    final bool isDark = widget.isDarkMode ?? false;
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Card(
-      color: isDark ? Colors.grey[850] : Colors.white,
       elevation: 5,
       margin: const EdgeInsets.symmetric(vertical: 6),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -95,7 +96,7 @@ class _SearchPatientPageState extends State<SearchPatientPage> {
         },
         leading: CircleAvatar(
           radius: 26,
-          backgroundColor: Colors.teal,
+          backgroundColor: colors.primary,
           backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
           child: imageUrl.isEmpty
               ? Text(
@@ -107,40 +108,39 @@ class _SearchPatientPageState extends State<SearchPatientPage> {
         ),
         title: Text(
           data['name'] ?? 'No Name',
-          style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : Colors.black87),
+          style:
+              TextStyle(fontWeight: FontWeight.bold, color: colors.onSurface),
         ),
         subtitle: Text(
           "ID: ${data['patientId']} | Age: ${data['age']} | Disease: ${data['disease']}",
-          style: TextStyle(
-              color: isDark ? Colors.white70 : Colors.black54, fontSize: 13),
+          style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13),
         ),
-        trailing:
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+        trailing: Icon(Icons.arrow_forward_ios,
+            size: 16, color: colors.onSurfaceVariant),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = widget.isDarkMode ?? false;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF121212) : const Color(0xFFF4F6F8),
       appBar: AppBar(
         title: const Text("Search Patient"),
-        backgroundColor: Colors.teal,
         centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
         child: Column(
           children: [
+            const PageIntro(
+                title: 'Find a patient',
+                subtitle:
+                    'Search records by name, patient ID, or phone number.'),
             Card(
-              color: isDark ? Colors.grey[850] : Colors.white,
-              elevation: 5,
+              elevation: 0,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16)),
               child: Padding(
@@ -150,20 +150,16 @@ class _SearchPatientPageState extends State<SearchPatientPage> {
                     Expanded(
                       child: TextField(
                         controller: searchC,
-                        style: TextStyle(
-                            color: isDark ? Colors.white : Colors.black87),
+                        style: TextStyle(color: colors.onSurface),
                         decoration: InputDecoration(
                           hintText: "Search by Name, Patient ID or Phone",
-                          hintStyle: TextStyle(
-                              color: isDark ? Colors.white54 : Colors.black54),
-                          prefixIcon:
-                              const Icon(Icons.search, color: Colors.teal),
+                          hintStyle: TextStyle(color: colors.onSurfaceVariant),
+                          prefixIcon: Icon(Icons.search, color: colors.primary),
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none),
                           filled: true,
-                          fillColor:
-                              isDark ? Colors.grey[800] : Colors.grey[200],
+                          fillColor: theme.inputDecorationTheme.fillColor,
                         ),
                       ),
                     ),
@@ -173,15 +169,16 @@ class _SearchPatientPageState extends State<SearchPatientPage> {
                       child: ElevatedButton(
                         onPressed: loading ? null : searchPatient,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.teal,
+                          backgroundColor: colors.primary,
+                          foregroundColor: colors.onPrimary,
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                         ),
                         child: loading
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 24,
                                 height: 24,
                                 child: CircularProgressIndicator(
-                                    color: Colors.white))
+                                    color: colors.onPrimary))
                             : const Text(
                                 "Search",
                                 style: TextStyle(
@@ -200,8 +197,7 @@ class _SearchPatientPageState extends State<SearchPatientPage> {
                       child: Text(
                         "No data",
                         style: TextStyle(
-                            color: isDark ? Colors.white70 : Colors.black54,
-                            fontSize: 16),
+                            color: colors.onSurfaceVariant, fontSize: 16),
                       ),
                     )
                   : ListView.builder(
@@ -229,11 +225,9 @@ class PatientDetailPage extends StatelessWidget {
     final List<String> images =
         List<String>.from(patientData['image_urls'] ?? []);
     return Scaffold(
-      backgroundColor:
-          isDarkMode ? const Color(0xFF121212) : const Color(0xFFF4F6F8),
       appBar: AppBar(
         title: Text(patientData['name'] ?? "Patient Detail"),
-        backgroundColor: Colors.teal,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

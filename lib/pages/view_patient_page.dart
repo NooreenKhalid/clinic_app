@@ -15,23 +15,21 @@ class ViewAllPatientsPage extends StatefulWidget {
 }
 
 class _ViewAllPatientsPageState extends State<ViewAllPatientsPage> {
-  static const Color primaryColor = Color(0xFF6A1B9A);
   final _firestore = FirebaseFirestore.instance;
 
   @override
   Widget build(BuildContext context) {
-    final darkMode = widget.isDarkMode ?? false;
+    final colors = Theme.of(context).colorScheme;
+    final darkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          darkMode ? const Color(0xFF121212) : const Color(0xFFF5F6FA),
       appBar: AppBar(
         title: const Text("All Patients"),
-        backgroundColor: darkMode ? Colors.purple.shade700 : primaryColor,
+        backgroundColor: colors.primary,
+        foregroundColor: colors.onPrimary,
         actions: [
           IconButton(
-            icon: Icon(darkMode ? Icons.wb_sunny : Icons.dark_mode,
-                color: Colors.white),
+            icon: Icon(darkMode ? Icons.wb_sunny : Icons.dark_mode),
             onPressed: widget.onThemeToggle,
           ),
         ],
@@ -60,7 +58,7 @@ class _ViewAllPatientsPageState extends State<ViewAllPatientsPage> {
               return Container(
                 margin: const EdgeInsets.only(bottom: 14),
                 decoration: BoxDecoration(
-                  color: darkMode ? const Color(0xFF1E1E1E) : Colors.white,
+                  color: colors.surface,
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
@@ -75,7 +73,7 @@ class _ViewAllPatientsPageState extends State<ViewAllPatientsPage> {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   leading: CircleAvatar(
                     radius: 26,
-                    backgroundColor: primaryColor,
+                    backgroundColor: colors.primary,
                     child: Text(
                       (data['name'] ?? 'P')[0].toUpperCase(),
                       style: const TextStyle(
@@ -89,21 +87,20 @@ class _ViewAllPatientsPageState extends State<ViewAllPatientsPage> {
                     style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
-                        color: darkMode ? Colors.white : Colors.black),
+                        color: colors.onSurface),
                   ),
                   subtitle: Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       "ID: $patientId\nAge: ${data['age'] ?? '-'}\nPhone: ${data['phone'] ?? 'NA'}",
                       style: TextStyle(
-                          fontSize: 13,
-                          color: darkMode ? Colors.white70 : Colors.black54),
+                          fontSize: 13, color: colors.onSurfaceVariant),
                     ),
                   ),
                   trailing: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 10),
                       shape: RoundedRectangleBorder(
@@ -175,8 +172,8 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
         }
       }
       setState(() {});
-    } catch (e) {
-      debugPrint("Error picking images: $e");
+    } catch (_) {
+      debugPrint("Patient image selection failed.");
     }
   }
 
@@ -208,8 +205,8 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Images uploaded successfully")),
       );
-    } catch (e) {
-      debugPrint("Upload failed: $e");
+    } catch (_) {
+      debugPrint("Patient image upload failed.");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Upload failed")),
       );
@@ -220,19 +217,17 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final darkMode = widget.isDarkMode ?? false;
+    final colors = Theme.of(context).colorScheme;
+    final darkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          darkMode ? const Color(0xFF121212) : const Color(0xFFF5F6FA),
       appBar: AppBar(
         title: const Text("Patient Details"),
-        backgroundColor:
-            darkMode ? Colors.purple.shade700 : const Color(0xFF6A1B9A),
+        backgroundColor: colors.primary,
+        foregroundColor: colors.onPrimary,
         actions: [
           IconButton(
-            icon: Icon(darkMode ? Icons.wb_sunny : Icons.dark_mode,
-                color: Colors.white),
+            icon: Icon(darkMode ? Icons.wb_sunny : Icons.dark_mode),
             onPressed: widget.onThemeToggle,
           )
         ],
@@ -256,10 +251,10 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _infoTile("Name", data['name'], darkMode),
-                _infoTile("Age", data['age'], darkMode),
-                _infoTile("Disease", data['disease'], darkMode),
-                _infoTile("Phone", data['phone'], darkMode),
+                _infoTile("Name", data['name']),
+                _infoTile("Age", data['age']),
+                _infoTile("Disease", data['disease']),
+                _infoTile("Phone", data['phone']),
                 const SizedBox(height: 16),
                 const Text("Patient Photos",
                     style:
@@ -279,10 +274,10 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
                 Row(
                   children: [
                     _actionButton(Icons.photo, "Gallery",
-                        () => pickImage(ImageSource.gallery), darkMode),
+                        () => pickImage(ImageSource.gallery)),
                     const SizedBox(width: 12),
                     _actionButton(Icons.camera_alt, "Camera",
-                        () => pickImage(ImageSource.camera), darkMode),
+                        () => pickImage(ImageSource.camera)),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -291,14 +286,14 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
                   height: 50,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6A1B9A),
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: uploading ? null : uploadImages,
                     child: uploading
-                        ? const CircularProgressIndicator(color: Colors.white)
+                        ? CircularProgressIndicator(color: colors.onPrimary)
                         : const Text("Upload Images",
                             style: TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.bold)),
@@ -312,12 +307,12 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
     );
   }
 
-  Widget _infoTile(String label, dynamic value, bool darkMode) {
+  Widget _infoTile(String label, dynamic value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text("$label: ${value ?? '-'}",
           style: TextStyle(
-              fontSize: 16, color: darkMode ? Colors.white : Colors.black)),
+              fontSize: 16, color: Theme.of(context).colorScheme.onSurface)),
     );
   }
 
@@ -336,16 +331,14 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
     );
   }
 
-  Widget _actionButton(
-      IconData icon, String text, VoidCallback onTap, bool darkMode) {
+  Widget _actionButton(IconData icon, String text, VoidCallback onTap) {
     return Expanded(
       child: ElevatedButton.icon(
-        icon: Icon(icon, color: Colors.white),
-        label: Text(text,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold)),
+        icon: Icon(icon),
+        label: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF6A1B9A),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

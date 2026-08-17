@@ -51,6 +51,19 @@ class AuthService {
       final doc = await _firestore.collection('users').doc(uid).get();
       _removeOverlaySafe(overlay);
 
+      // Staff access is an explicit approval, not simply a role selected in
+      // the UI. Rejected staff sessions are signed out before the message is
+      // shown so AuthWrapper cannot redirect them into the staff workspace.
+      if (selectedRole == 'staff' && !doc.exists) {
+        await _auth.signOut();
+        _showSnackBar(
+          context,
+          'This staff account has been deactivated by the administrator.',
+          Colors.redAccent,
+        );
+        return;
+      }
+
       if (!doc.exists) {
         _showSnackBar(context, "User role not found in database!", Colors.red);
         return;
@@ -63,6 +76,16 @@ class AuthService {
 
       final role = data['role'] as String?;
 
+      if (selectedRole == 'staff' && role != 'staff') {
+        await _auth.signOut();
+        _showSnackBar(
+          context,
+          'This staff account has been deactivated by the administrator.',
+          Colors.redAccent,
+        );
+        return;
+      }
+
       if (role == null || (role != 'admin' && role != 'staff')) {
         _showSnackBar(context, "Invalid role assigned to user!", Colors.orange);
         return;
@@ -72,6 +95,24 @@ class AuthService {
         _showSnackBar(
             context, "Role mismatch! Select correct role.", Colors.deepOrange);
         return;
+      }
+
+      if (role == 'staff') {
+        final staffDoc = await _firestore.collection('staff').doc(uid).get();
+        // Accounts created before staff management did not have a staff
+        // approval document. Keep those existing staff accounts working
+        // unless an administrator has explicitly marked them inactive.
+        final isActive = data['status'] != 'inactive' &&
+            (!staffDoc.exists || staffDoc.data()?['status'] == 'active');
+        if (!isActive) {
+          await _auth.signOut();
+          _showSnackBar(
+            context,
+            'This staff account has been deactivated by the administrator.',
+            Colors.redAccent,
+          );
+          return;
+        }
       }
 
       // Navigate based on role with dark mode support
@@ -96,16 +137,19 @@ class AuthService {
           ),
         );
       }
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (error) {
       _removeOverlaySafe(overlay);
       _showSnackBar(
         context,
-        "Login failed: ${e.message ?? e.code}",
+        selectedRole == 'staff' && error.code == 'user-disabled'
+            ? 'This staff account has been deactivated by the administrator.'
+            : "Unable to sign in. Check your details and try again.",
         Colors.redAccent,
       );
-    } catch (e) {
+    } catch (_) {
       _removeOverlaySafe(overlay);
-      _showSnackBar(context, "Unexpected error: $e", Colors.redAccent);
+      _showSnackBar(
+          context, "Something went wrong. Please try again.", Colors.redAccent);
     }
   }
 
@@ -127,8 +171,9 @@ class AuthService {
         ),
       );
       _showSnackBar(context, "Logged out successfully", Colors.green);
-    } catch (e) {
-      _showSnackBar(context, "Logout failed: $e", Colors.redAccent);
+    } catch (_) {
+      _showSnackBar(
+          context, "Logout failed. Please try again.", Colors.redAccent);
     }
   }
 

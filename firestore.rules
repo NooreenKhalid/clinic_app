@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function role() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function clinicUser() {
+      return signedIn() && (role() == 'admin' || role() == 'staff');
+    }
+
+    function admin() {
+      return signedIn() && role() == 'admin';
+    }
+
+    function noPassword() {
+      return !request.resource.data.keys().hasAny(['password']);
+    }
+
+    function validStaffUser() {
+      return request.resource.data.role == 'staff'
+        && request.resource.data.status in ['active', 'inactive']
+        && noPassword();
+    }
+
+    function validStaffRecord(staffId) {
+      return request.resource.data.uid == staffId
+        && request.resource.data.role == 'staff'
+        && request.resource.data.status in ['active', 'inactive']
+        && noPassword();
+    }
+
+    // Only administrators can provision/deactivate staff role documents. This
+    // client workflow cannot modify existing administrator documents.
+    match /users/{userId} {
+      allow get: if signedIn() && (request.auth.uid == userId || admin());
+      allow list: if admin();
+      allow create: if admin() && validStaffUser();
+      allow update: if admin()
+        && resource.data.role == 'staff'
+        && validStaffUser();
+      allow delete: if false;
+    }
+
+    // Staff can read only their own directory record. Only administrators can
+    // create, edit, or deactivate directory records.
+    match /staff/{staffId} {
+      allow get: if admin() || (signedIn() && request.auth.uid == staffId);
+      allow list: if admin();
+      allow create: if admin()
+        && validStaffRecord(staffId)
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+      allow update: if admin()
+        && validStaffRecord(staffId)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if false;
+    }
+
+    match /patients/{patientId} {
+      allow get, list: if clinicUser();
+
+      // Both existing roles can register patients. The document ID and the
+      // createdBy field must match the patient ID and signed-in creator used by
+      // the current app; no collection or field names are changed.
+      allow create: if clinicUser()
+        && request.resource.data.patientId == patientId
+        && request.resource.data.createdBy == request.auth.uid;
+
+      // Admins retain the current full edit/delete workflow. Staff currently
+      // edit only image URLs from Patient Details, so their writes are limited
+      // to the existing image fields used by the app.
+      allow update: if admin()
+        || (clinicUser()
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['image_urls', 'imageUrl']));
+      allow delete: if admin();
+    }
+
+    // Deny any collection not used by this app unless an explicit rule is
+    // reviewed and added in a future change.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

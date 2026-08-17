@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../core/app_ui.dart';
 
 class DeletePatientPage extends StatefulWidget {
   const DeletePatientPage({super.key});
@@ -216,13 +217,15 @@ class _DeletePatientPageState extends State<DeletePatientPage> {
   }
 
   Widget _searchFilters(String label, String value) {
+    final colors = Theme.of(context).colorScheme;
+    final selected = searchBy == value;
     return ChoiceChip(
       label: Text(label,
-          style: TextStyle(
-              color: searchBy == value ? Colors.white : Colors.black)),
-      selected: searchBy == value,
-      selectedColor: Colors.redAccent,
-      backgroundColor: Colors.grey[200],
+          style:
+              TextStyle(color: selected ? colors.onError : colors.onSurface)),
+      selected: selected,
+      selectedColor: colors.error,
+      backgroundColor: colors.surface,
       onSelected: (_) => setState(() => searchBy = value),
     );
   }
@@ -232,16 +235,19 @@ class _DeletePatientPageState extends State<DeletePatientPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Delete Patient"),
-        backgroundColor: Colors.redAccent,
         centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
         child: Column(
           children: [
+            const PageIntro(
+                title: 'Delete patient',
+                subtitle:
+                    'Search, review, then permanently remove a selected record.'),
             // 🔍 Search Section
             Card(
-              elevation: 5,
+              elevation: 0,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
               child: Padding(
@@ -274,13 +280,16 @@ class _DeletePatientPageState extends State<DeletePatientPage> {
                       child: ElevatedButton(
                         onPressed: loading ? null : searchPatients,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent,
+                          backgroundColor: Theme.of(context).colorScheme.error,
+                          foregroundColor:
+                              Theme.of(context).colorScheme.onError,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                         ),
                         child: loading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white)
+                            ? CircularProgressIndicator(
+                                color: Theme.of(context).colorScheme.onError,
+                              )
                             : const Text(
                                 "Search",
                                 style: TextStyle(
@@ -318,7 +327,8 @@ class _DeletePatientPageState extends State<DeletePatientPage> {
                             fontSize: 16, fontWeight: FontWeight.bold)),
                     onPressed: loading ? null : deletePatient,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                      foregroundColor: Theme.of(context).colorScheme.onError,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),

@@ -1,5 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
+import '../core/app_ui.dart';
 import '../pages/add_patient_page.dart';
 import '../pages/view_all_patients_page.dart';
 
@@ -11,122 +14,130 @@ class StaffDashboardPro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-
-    // Theme-aware colors
-    final backgroundColor =
-        isDarkMode == true ? const Color(0xFF121212) : const Color(0xFFF4F6FA);
-    final appBarColor = isDarkMode == true ? Colors.teal.shade700 : Colors.teal;
-
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text(
-          "Staff Dashboard",
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.local_hospital_outlined, color: colors.primary),
+            const SizedBox(width: 10),
+            const Text('Smart Clinic'),
+          ],
         ),
-        backgroundColor: appBarColor,
-        centerTitle: true,
         actions: [
-          // Dark/Light toggle
           IconButton(
-            icon: Icon(
-              isDarkMode == true ? Icons.wb_sunny : Icons.dark_mode,
-              color: Colors.white,
-            ),
+            tooltip: 'Toggle theme',
             onPressed: onThemeToggle,
+            icon: const Icon(Icons.light_mode_outlined),
           ),
-
-          // User Email + Logout Dropdown
-          if (user != null)
-            PopupMenuButton<int>(
-              icon: const Icon(Icons.account_circle,
-                  size: 28, color: Colors.white),
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 1,
-                  child: Text(
-                    user.email ?? "No Email",
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color:
-                            isDarkMode == true ? Colors.white : Colors.black87),
-                  ),
-                ),
-                const PopupMenuDivider(),
-                PopupMenuItem(
-                  value: 2,
-                  child: Row(
-                    children: const [
-                      Icon(Icons.logout, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text("Logout", style: TextStyle(color: Colors.red)),
-                    ],
-                  ),
-                ),
-              ],
-              onSelected: (value) async {
-                if (value == 2) {
-                  try {
-                    await FirebaseAuth.instance.signOut();
-                    Navigator.popUntil(context, (route) => route.isFirst);
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text("Logout failed: $e"),
-                        backgroundColor: Colors.redAccent,
-                      ),
-                    );
-                  }
-                }
-              },
+          IconButton(
+            tooltip: 'Logout',
+            onPressed: () async => FirebaseAuth.instance.signOut(),
+            icon: const Icon(Icons.logout_outlined),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        stream: FirebaseFirestore.instance.collection('patients').snapshots(),
+        builder: (context, snapshot) => ListView(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+          children: [
+            const PageIntro(
+              title: 'Staff workspace',
+              subtitle: 'Access the patient records you need today.',
             ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          _dashboardCard(context, "Add Patient", Icons.person_add, Colors.green,
-              () => _navigate(context, const AddPatientPage())),
-          _dashboardCard(context, "View Patients", Icons.list, Colors.blue,
-              () => _navigate(context, const ViewAllPatientsPage())),
-        ],
+            AppSurface(
+              child: Row(
+                children: [
+                  Icon(Icons.people_alt_outlined, color: colors.primary),
+                  const SizedBox(width: 12),
+                  Text(
+                    '${snapshot.data?.docs.length ?? 0}',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'patient records',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
+            _Action(
+              'Register a patient',
+              'Create a new patient record',
+              Icons.person_add_alt_1_outlined,
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AddPatientPage()),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _Action(
+              'View patient records',
+              'Browse and manage existing records',
+              Icons.groups_2_outlined,
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ViewAllPatientsPage()),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
 
-  /// ---------------- Card Widget ----------------
-  Widget _dashboardCard(BuildContext context, String title, IconData icon,
-      Color color, VoidCallback onTap) {
-    return Card(
-      color: isDarkMode == true ? Colors.grey[850] : Colors.white,
-      elevation: 6,
-      shadowColor: Colors.black26,
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ListTile(
-        onTap: onTap,
-        leading: CircleAvatar(
-          backgroundColor: color,
-          radius: 26,
-          child: Icon(icon, color: Colors.white, size: 26),
+class _Action extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback tap;
+
+  const _Action(this.title, this.subtitle, this.icon, this.tap);
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: tap,
+        borderRadius: BorderRadius.circular(16),
+        child: AppSurface(
+          child: Row(
+            children: [
+              Icon(icon, color: colors.primary),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward, color: colors.primary),
+            ],
+          ),
         ),
-        title: Text(
-          title,
-          style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-              color: isDarkMode == true ? Colors.white : Colors.black),
-        ),
-        trailing: Icon(Icons.arrow_forward_ios,
-            size: 16,
-            color: isDarkMode == true ? Colors.white70 : Colors.black54),
       ),
     );
-  }
-
-  /// ---------------- Navigation Helper ----------------
-  void _navigate(BuildContext context, Widget page) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 }
