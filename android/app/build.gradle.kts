@@ -42,8 +42,8 @@ android {
         versionName = flutter.versionName
     }
 
-    buildTypes {
-        if (keystorePropertiesFile.exists()) {
+    if (keystorePropertiesFile.exists()) {
+        signingConfigs {
             create("release") {
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
@@ -51,6 +51,9 @@ android {
                 storePassword = keystoreProperties["storePassword"] as String
             }
         }
+    }
+
+    buildTypes {
         release {
             // A distributable release must use the external, ignored keystore.
             signingConfig = if (keystorePropertiesFile.exists()) {

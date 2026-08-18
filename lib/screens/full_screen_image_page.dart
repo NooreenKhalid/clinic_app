@@ -9,8 +9,6 @@ import 'package:printing/printing.dart';
 import '../services/permission_service.dart';
 
 // ⚠️ important: html sirf web k liye
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
 
 class FullScreenImagePage extends StatelessWidget {
   final String imageUrl;
@@ -32,13 +30,7 @@ class FullScreenImagePage extends StatelessWidget {
       final bytes = res.bodyBytes;
 
       if (kIsWeb) {
-        final blob = html.Blob([bytes]);
-        final url = html.Url.createObjectUrlFromBlob(blob);
-        html.AnchorElement(href: url)
-          ..setAttribute("download", "$patientName.jpg")
-          ..click();
-        html.Url.revokeObjectUrl(url);
-        _show(context, "Image downloaded");
+        _show(context, "Image saving is available in the Android app");
         return;
       }
 
@@ -73,16 +65,6 @@ class FullScreenImagePage extends StatelessWidget {
       );
 
       final pdfBytes = await pdf.save();
-
-      if (kIsWeb) {
-        final blob = html.Blob([pdfBytes], 'application/pdf');
-        final url = html.Url.createObjectUrlFromBlob(blob);
-        html.AnchorElement(href: url)
-          ..setAttribute("download", "$patientName.pdf")
-          ..click();
-        html.Url.revokeObjectUrl(url);
-        return;
-      }
 
       await Printing.sharePdf(
         bytes: pdfBytes,

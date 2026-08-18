@@ -271,7 +271,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
   final _age = TextEditingController();
   final _occupation = TextEditingController();
   final _email = TextEditingController();
-  final _firebaseAuthUid = TextEditingController();
+  final _password = TextEditingController();
   final _picker = ImagePicker();
   Uint8List? _imageBytes;
   bool _saving = false;
@@ -282,7 +282,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
     _age.dispose();
     _occupation.dispose();
     _email.dispose();
-    _firebaseAuthUid.dispose();
+    _password.dispose();
     super.dispose();
   }
 
@@ -314,11 +314,11 @@ class _AddStaffPageState extends State<AddStaffPage> {
         throw StateError('Profile image upload failed.');
       }
       await StaffService.createStaff(
-        uid: _firebaseAuthUid.text.trim(),
         name: _name.text.trim(),
         age: int.parse(_age.text.trim()),
         occupation: _occupation.text.trim(),
         email: _email.text.trim(),
+        password: _password.text,
         profileImageUrl: imageUrl,
       );
       if (mounted) {
@@ -413,14 +413,20 @@ class _AddStaffPageState extends State<AddStaffPage> {
                 },
               ),
               _field(
-                _firebaseAuthUid,
-                'Firebase Auth UID (create account first in Firebase Console)',
-                requiredMessage: 'Paste the Firebase Auth UID.',
+                _password,
+                'Temporary password',
+                obscureText: true,
+                validator: (value) {
+                  if ((value ?? '').length < 6) {
+                    return 'Use at least 6 characters.';
+                  }
+                  return null;
+                },
               ),
               Padding(
                 padding: const EdgeInsets.only(bottom: 14),
                 child: Text(
-                  'First create this staff email/password account in Firebase Console > Authentication > Users, then paste its UID here.',
+                  'The account is created securely by Firebase Cloud Functions. This password is never stored in Firestore.',
                   style: TextStyle(color: colors.onSurfaceVariant),
                 ),
               ),

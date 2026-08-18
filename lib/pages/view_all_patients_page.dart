@@ -1,9 +1,11 @@
 import 'dart:typed_data';
-import 'dart:html' as html; // Web download
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/imagebb_service.dart';
+import '../services/permission_service.dart';
 import '../core/app_ui.dart';
 import '../screens/patient_photo_page.dart';
 
@@ -239,11 +241,40 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
     }
   }
 
-  // Web download image
-  void downloadImage(String url, String fileName) {
-    final anchor = html.AnchorElement(href: url)
-      ..setAttribute("download", fileName)
-      ..click();
+  Future<void> downloadImage(String url, String fileName) async {
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode != 200) {
+        throw Exception('Image download failed');
+      }
+
+      final allowed = await PermissionService.requestStoragePermission();
+      if (!allowed) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Storage permission denied')),
+          );
+        }
+        return;
+      }
+
+      await ImageGallerySaver.saveImage(
+        Uint8List.fromList(response.bodyBytes),
+        quality: 100,
+        name: fileName.replaceFirst(RegExp(r'\.[^.]+$'), ''),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image saved to gallery')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to save image')),
+        );
+      }
+    }
   }
 
   // Delete image

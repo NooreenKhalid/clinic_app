@@ -96,10 +96,17 @@ exports.deactivateStaffMember = onCall(async (request) => {
   }
 
   await auth.updateUser(uid, {disabled: true});
-  await db.runTransaction(async (transaction) => {
-    transaction.update(staffRef, {status: "inactive"});
-    transaction.set(db.collection("users").doc(uid), {status: "inactive"}, {merge: true});
-  });
+  try {
+    await db.runTransaction(async (transaction) => {
+      transaction.update(staffRef, {status: "inactive"});
+      transaction.set(
+          db.collection("users").doc(uid), {status: "inactive"}, {merge: true});
+    });
+  } catch (error) {
+    // Avoid leaving the account disabled when its directory update failed.
+    await auth.updateUser(uid, {disabled: false});
+    throw new HttpsError("internal", "Unable to deactivate the staff account.");
+  }
 
   return {uid};
 });

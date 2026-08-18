@@ -34,15 +34,12 @@ service cloud.firestore {
         && noPassword();
     }
 
-    // Only administrators can provision/deactivate staff role documents. This
-    // client workflow cannot modify existing administrator documents.
+    // Staff accounts are provisioned and deactivated only by Cloud Functions
+    // using the Admin SDK. Clients cannot create or alter these documents.
     match /users/{userId} {
       allow get: if signedIn() && (request.auth.uid == userId || admin());
       allow list: if admin();
-      allow create: if admin() && validStaffUser();
-      allow update: if admin()
-        && resource.data.role == 'staff'
-        && validStaffUser();
+      allow create, update: if false;
       allow delete: if false;
     }
 
@@ -51,14 +48,7 @@ service cloud.firestore {
     match /staff/{staffId} {
       allow get: if admin() || (signedIn() && request.auth.uid == staffId);
       allow list: if admin();
-      allow create: if admin()
-        && validStaffRecord(staffId)
-        && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.createdAt == request.time;
-      allow update: if admin()
-        && validStaffRecord(staffId)
-        && request.resource.data.createdBy == resource.data.createdBy
-        && request.resource.data.createdAt == resource.data.createdAt;
+      allow create, update: if false;
       allow delete: if false;
     }
 

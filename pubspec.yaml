@@ -1,3 +1,4 @@
+
 name: smart_clinic_app
 description: "Secure patient record management for Smart Clinic App"
 publish_to: "none"
@@ -15,6 +16,7 @@ dependencies:
   firebase_core: ^4.4.0
   firebase_auth: ^6.1.4
   cloud_firestore: ^6.1.2
+  cloud_functions: ^6.0.0
 
   # Image Picker
   image_picker: ^1.0.7
@@ -24,9 +26,6 @@ dependencies:
 
   # HTTP / ImageBB
   http: ^1.2.2
-
-  # Save image to gallery
-  image_gallery_saver: ^2.0.3
 
   # PDF
   pdf: ^3.10.6
@@ -48,6 +47,7 @@ dependencies:
 
   # External links
   url_launcher: ^6.1.10
+  image_gallery_saver: ^2.0.3
 
 dev_dependencies:
   flutter_test:
@@ -77,3 +77,4 @@ flutter_launcher_icons:
 
   # iOS
   remove_alpha_ios: true
+
