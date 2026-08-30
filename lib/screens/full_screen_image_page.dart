@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
@@ -40,7 +40,7 @@ class FullScreenImagePage extends StatelessWidget {
         return;
       }
 
-      await ImageGallerySaver.saveImage(
+      await ImageGallerySaverPlus.saveImage(
         Uint8List.fromList(bytes),
         quality: 100,
         name: patientName,

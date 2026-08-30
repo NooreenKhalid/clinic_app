@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/imagebb_service.dart';
 import '../services/permission_service.dart';
@@ -258,7 +258,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
         return;
       }
 
-      await ImageGallerySaver.saveImage(
+      await ImageGallerySaverPlus.saveImage(
         Uint8List.fromList(response.bodyBytes),
         quality: 100,
         name: fileName.replaceFirst(RegExp(r'\.[^.]+$'), ''),

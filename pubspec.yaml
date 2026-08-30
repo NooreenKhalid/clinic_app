@@ -47,7 +47,7 @@ dependencies:
 
   # External links
   url_launcher: ^6.1.10
-  image_gallery_saver: ^2.0.3
+  image_gallery_saver_plus: ^5.1.1
 
 dev_dependencies:
   flutter_test:

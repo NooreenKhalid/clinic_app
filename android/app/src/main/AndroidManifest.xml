@@ -1,4 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.flutter_application_1">
 
     <!-- 🔐 PERMISSIONS -->
@@ -17,9 +18,12 @@
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
+    <!-- Gallery save permission -->
+    <!-- Override image_gallery_saver_plus maxSdkVersion=28 -->
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
+        android:maxSdkVersion="32"
+        tools:replace="android:maxSdkVersion" />
 
     <application
         android:name="${applicationName}"
@@ -54,6 +58,7 @@
             android:authorities="${applicationId}.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
+
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
@@ -63,10 +68,12 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
     </application>
 
     <!-- 🔹 REQUIRED QUERIES -->
     <queries>
+
         <intent>
             <action android:name="android.intent.action.GET_CONTENT" />
             <data android:mimeType="image/*" />
@@ -80,6 +87,7 @@
         <intent>
             <action android:name="android.media.action.IMAGE_CAPTURE" />
         </intent>
+
     </queries>
 
 </manifest>
